@@ -154,6 +154,7 @@ const CONFIG_GET_KEYS = [
 	"maxColumnWidth",
 	"defaultPort",
 	"autoOpenBrowser",
+	"plantumlServerUrl",
 	"remoteOperations",
 	"autoCommit",
 	"filesystemOnly",
@@ -172,6 +173,7 @@ const CONFIG_SET_KEYS = [
 	"maxColumnWidth",
 	"autoOpenBrowser",
 	"defaultPort",
+	"plantumlServerUrl",
 	"remoteOperations",
 	"autoCommit",
 	"filesystemOnly",
@@ -180,6 +182,17 @@ const CONFIG_SET_KEYS = [
 	"checkActiveBranches",
 	"activeBranchDays",
 ] as const;
+
+/** A PlantUML server base URL, normalized without its trailing slash, or null when unusable. */
+function normalizePlantumlServerUrl(value: string): string | null {
+	try {
+		const url = new URL(value);
+		if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+		return url.href.replace(/\/+$/, "");
+	} catch {
+		return null;
+	}
+}
 
 function normalizeIntegrationOption(value: string): IntegrationMode | null {
 	const normalized = value.trim().toLowerCase();
@@ -5005,7 +5018,7 @@ agentsCmd
 
 // Config command group
 const CONFIG_AVAILABLE_KEYS =
-	"Available keys: defaultEditor, projectName, defaultAssignee, defaultStatus, statuses, labels, priorities, types, projects, milestones, definitionOfDone, dateFormat, maxColumnWidth, defaultPort, autoOpenBrowser, hideEmptyColumns, remoteOperations, autoCommit, filesystemOnly, bypassGitHooks, zeroPaddedIds, checkActiveBranches, activeBranchDays";
+	"Available keys: defaultEditor, projectName, defaultAssignee, defaultStatus, statuses, labels, priorities, types, projects, milestones, definitionOfDone, dateFormat, maxColumnWidth, defaultPort, autoOpenBrowser, hideEmptyColumns, plantumlServerUrl, remoteOperations, autoCommit, filesystemOnly, bypassGitHooks, zeroPaddedIds, checkActiveBranches, activeBranchDays";
 
 const configCmd = addHelpSchema(program.command("config"), {
 	reads: "Project Backlog.md configuration",
@@ -5170,6 +5183,9 @@ addHelpSchema(configCmd.command("get <key>"), {
 				case "defaultPort":
 					console.log(config.defaultPort?.toString() || "");
 					break;
+				case "plantumlServerUrl":
+					console.log(config.plantumlServerUrl || "");
+					break;
 				case "autoOpenBrowser":
 					console.log(config.autoOpenBrowser?.toString() || "");
 					break;
@@ -5303,6 +5319,20 @@ addHelpSchema(configCmd.command("set <key> <value>"), {
 						process.exit(1);
 					}
 					config.defaultPort = port;
+					break;
+				}
+				case "plantumlServerUrl": {
+					const trimmed = value.trim();
+					if (trimmed === "") {
+						config.plantumlServerUrl = undefined;
+						break;
+					}
+					const serverUrl = normalizePlantumlServerUrl(trimmed);
+					if (!serverUrl) {
+						console.error("plantumlServerUrl must be an http or https URL");
+						process.exit(1);
+					}
+					config.plantumlServerUrl = serverUrl;
 					break;
 				}
 				case "remoteOperations": {
@@ -5475,6 +5505,7 @@ addHelpSchema(configCmd.command("list"), {
 			console.log(`  autoOpenBrowser: ${config.autoOpenBrowser ?? "(not set)"}`);
 			console.log(`  hideEmptyColumns: ${config.hideEmptyColumns ?? "(not set)"}`);
 			console.log(`  defaultPort: ${config.defaultPort ?? "(not set)"}`);
+			console.log(`  plantumlServerUrl: ${config.plantumlServerUrl ?? "(not set)"}`);
 			console.log(`  remoteOperations: ${config.remoteOperations ?? "(not set)"}`);
 			console.log(`  autoCommit: ${config.autoCommit ?? "(not set)"}`);
 			console.log(`  filesystemOnly: ${config.filesystemOnly ?? "false"}`);

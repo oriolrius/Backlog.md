@@ -2136,6 +2136,9 @@ ${description || `Milestone: ${title}`}`,
 				case "default_port":
 					config.defaultPort = Number.parseInt(value, 10);
 					break;
+				case "plantuml_server_url":
+					config.plantumlServerUrl = value.replace(/['"]/g, "");
+					break;
 				case "remote_operations":
 					config.remoteOperations = value.toLowerCase() === "true";
 					break;
@@ -2190,6 +2193,7 @@ ${description || `Milestone: ${title}`}`,
 			autoOpenBrowser: config.autoOpenBrowser,
 			hideEmptyColumns: config.hideEmptyColumns,
 			defaultPort: config.defaultPort,
+			plantumlServerUrl: config.plantumlServerUrl,
 			remoteOperations: config.remoteOperations,
 			autoCommit: config.autoCommit,
 			filesystemOnly: config.filesystemOnly,
@@ -2230,6 +2234,7 @@ ${description || `Milestone: ${title}`}`,
 			...(typeof config.autoOpenBrowser === "boolean" ? [`auto_open_browser: ${config.autoOpenBrowser}`] : []),
 			...(typeof config.hideEmptyColumns === "boolean" ? [`hide_empty_columns: ${config.hideEmptyColumns}`] : []),
 			...(config.defaultPort ? [`default_port: ${config.defaultPort}`] : []),
+			...(config.plantumlServerUrl ? [`plantuml_server_url: "${config.plantumlServerUrl}"`] : []),
 			...(typeof config.remoteOperations === "boolean" ? [`remote_operations: ${config.remoteOperations}`] : []),
 			...(typeof config.autoCommit === "boolean" ? [`auto_commit: ${config.autoCommit}`] : []),
 			...(typeof config.filesystemOnly === "boolean" ? [`filesystem_only: ${config.filesystemOnly}`] : []),

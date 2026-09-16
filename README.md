@@ -64,6 +64,8 @@ Backlog.md itself. The full task ledger lives in this repo's [backlog folder](ba
 
 * 🌐 **Web UI** -- `backlog browser` serves a local Kanban board with drag-and-drop and task editing forms
 
+* 📐 **Diagrams** -- Mermaid and PlantUML diagrams render inline in the browser, offline by default
+
 * 🔍 **Search** -- fuzzy search across tasks, docs & decisions with `backlog search`
 
 * 🔒 **Local-first** -- no server, no account, no telemetry; tasks are plain files in your repo, and remote Git operations are optional
@@ -208,6 +210,7 @@ backlog browser --no-open
 - Real-time updates across all views
 - Responsive design for desktop and mobile
 - Task archiving with confirmation dialogs
+- Mermaid and PlantUML diagrams rendered inline in task and document markdown
 - Seamless CLI integration - all changes sync with markdown files
 
 ![Web Interface Screenshot](./.github/web.jpeg)

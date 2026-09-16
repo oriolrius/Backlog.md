@@ -341,6 +341,8 @@ export interface BacklogConfig {
 	defaultEditor?: string;
 	autoOpenBrowser?: boolean;
 	defaultPort?: number;
+	/** PlantUML server used to render diagrams in the browser. Unset renders them with the bundled engine. */
+	plantumlServerUrl?: string;
 	/** When true, hide board columns whose status has no tasks. Columns reappear while a task is being dragged so they remain valid drop targets. Defaults to false. */
 	hideEmptyColumns?: boolean;
 	remoteOperations?: boolean;

@@ -265,12 +265,28 @@ try {
 		assert(stylesheet.includes(".flex{display:flex}"), "Compiled stylesheet is missing Tailwind utilities.");
 		assert(stylesheet.includes(".wmde-markdown"), "Compiled stylesheet is missing Markdown editor styles.");
 
-		const scriptResponse = await fetchWithTimeout(scriptUrl.href, { method: "HEAD" });
+		const scriptResponse = await fetchWithTimeout(scriptUrl.href);
 		assert(scriptResponse.status === 200, `Browser script returned ${scriptResponse.status}.`);
 		assert(
 			scriptResponse.headers.get("content-type")?.includes("text/javascript"),
 			`Unexpected script content type: ${scriptResponse.headers.get("content-type")}`,
 		);
+
+		// The PlantUML engine is served as separate assets so it never loads on markdown without a
+		// diagram. The chunk therefore carries only their URLs, and each one has to be reachable.
+		const script = await scriptResponse.text();
+		assert(!script.includes("PSystemBuilder"), "PlantUML engine was inlined into the browser chunk.");
+		const enginePaths = new Set(
+			Array.from(script.matchAll(/"(\/(?:plantuml|viz-global|themes)-[a-z0-9]+\.js)"/g), (match) => match[1] ?? ""),
+		);
+		assert(
+			enginePaths.size === 3,
+			`Expected 3 PlantUML engine assets in the browser chunk, found ${enginePaths.size}.`,
+		);
+		for (const enginePath of enginePaths) {
+			const engineResponse = await fetchWithTimeout(new URL(enginePath, `${baseUrl}/`).href, { method: "HEAD" });
+			assert(engineResponse.status === 200, `PlantUML asset ${enginePath} returned ${engineResponse.status}.`);
+		}
 
 		const faviconResponse = await fetchWithTimeout(faviconUrl.href, { method: "HEAD" });
 		assert(faviconResponse.status === 200, `Favicon returned ${faviconResponse.status}.`);

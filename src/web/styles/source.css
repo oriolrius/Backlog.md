@@ -265,4 +265,10 @@
     .w-md-editor textarea {
         resize: none !important;
     }
+
+    /* PlantUML sizes its SVG in pixels, so cap it to the container */
+    .wmde-markdown .plantuml svg {
+        max-width: 100% !important;
+        height: auto !important;
+    }
 }

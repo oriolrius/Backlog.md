@@ -306,6 +306,8 @@ Dependents (2 direct, 2 total):
 
 The Web UI listens only on `127.0.0.1`; it is not reachable from other devices on the LAN or VPN.
 
+Task, document, and decision markdown renders Mermaid and PlantUML diagrams inline. PlantUML uses a bundled engine, so nothing leaves the machine unless `plantumlServerUrl` points at a PlantUML server (see [ADVANCED-CONFIG.md](ADVANCED-CONFIG.md)).
+
 To keep the Web UI running in the background with auto-start on boot, see [Running Backlog.md as a Service](backlog/docs/doc-003%20-%20Running-Backlog-Browser-as-a-Service.md).
 
 ## Documentation

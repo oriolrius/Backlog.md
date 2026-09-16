@@ -180,6 +180,38 @@ describe("Config commands", () => {
 		expect(listOutput).toContain("hideEmptyColumns: true");
 	});
 
+	it("round-trips plantumlServerUrl through config get/set/list and the config file", async () => {
+		const defaultGet = await $`bun ${CLI_PATH} config get plantumlServerUrl`.cwd(TEST_DIR).text();
+		expect(defaultGet.trim()).toBe("");
+
+		await $`bun ${CLI_PATH} config set plantumlServerUrl https://plantuml.example.com/plantuml/`.cwd(TEST_DIR).quiet();
+
+		const afterSet = await $`bun ${CLI_PATH} config get plantumlServerUrl`.cwd(TEST_DIR).text();
+		expect(afterSet.trim()).toBe("https://plantuml.example.com/plantuml");
+
+		const listOutput = await $`bun ${CLI_PATH} config list`.cwd(TEST_DIR).text();
+		expect(listOutput).toContain("plantumlServerUrl: https://plantuml.example.com/plantuml");
+
+		// The whole file is rewritten on every save, so confirm the key reached disk.
+		const persisted = core.filesystem.parseConfig(await Bun.file(core.filesystem.configFilePath).text());
+		expect(persisted.plantumlServerUrl).toBe("https://plantuml.example.com/plantuml");
+	});
+
+	it("clears plantumlServerUrl when set to an empty value", async () => {
+		await $`bun ${CLI_PATH} config set plantumlServerUrl https://plantuml.example.com/plantuml`.cwd(TEST_DIR).quiet();
+		await $`bun ${CLI_PATH} config set plantumlServerUrl ${""}`.cwd(TEST_DIR).quiet();
+
+		const afterClear = await $`bun ${CLI_PATH} config get plantumlServerUrl`.cwd(TEST_DIR).text();
+		expect(afterClear.trim()).toBe("");
+	});
+
+	it("rejects a plantumlServerUrl that is not an http(s) URL", async () => {
+		const result = await $`bun ${CLI_PATH} config set plantumlServerUrl not-a-url`.cwd(TEST_DIR).nothrow().quiet();
+
+		expect(result.exitCode).not.toBe(0);
+		expect(result.stderr.toString()).toContain("plantumlServerUrl must be an http or https URL");
+	});
+
 	it("parses block-style YAML sequences identically to inline arrays for list keys", () => {
 		const inline = core.filesystem.parseConfig(
 			'project_name: "P"\nstatuses: ["To Do", "Done"]\nlabels: ["a", "b"]\ntypes: ["bug", "epic"]\npriorities: ["Critical", "Low"]\n',

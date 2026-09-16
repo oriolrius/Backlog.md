@@ -14,6 +14,7 @@ import InitializationScreen from './components/InitializationScreen';
 import LoadingSpinner from './components/LoadingSpinner';
 import { SuccessToast } from './components/SuccessToast';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PlantUmlServerProvider } from './contexts/PlantUmlServerContext';
 import { TaskIdIndexProvider } from './contexts/TaskIdIndexContext';
 import {
 	type Decision,
@@ -975,6 +976,7 @@ function AppContent() {
 
   return (
     <ThemeProvider>
+      <PlantUmlServerProvider serverUrl={config?.plantumlServerUrl}>
       <TaskIdIndexProvider tasks={tasks}>
       <Routes>
             <Route
@@ -1112,6 +1114,7 @@ function AppContent() {
         />
       )}
       </TaskIdIndexProvider>
+      </PlantUmlServerProvider>
     </ThemeProvider>
   );
 }

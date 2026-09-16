@@ -32,6 +32,7 @@ Running `backlog config` with no arguments launches the interactive advanced wiz
 | `defaultEditor`   | Editor for 'E' key | Platform default (nano/notepad) |
 | `defaultPort`     | Web UI port        | `6420`                        |
 | `autoOpenBrowser` | Open browser automatically | `true`            |
+| `plantumlServerUrl` | PlantUML server used to render diagrams in the browser | `(not set)` — bundled engine |
 | `remoteOperations`| Enable remote git operations | `true`           |
 | `autoCommit`      | Automatically commit task changes | `false`       |
 | `bypassGitHooks`  | Skip git hooks when committing (uses --no-verify) | `false`       |
@@ -50,6 +51,14 @@ Running `backlog config` with no arguments launches the interactive advanced wiz
 > **Git Control**: By default, `autoCommit` is set to `false`, giving you full control over your git history. Task operations will modify files but won't automatically commit changes. Set `autoCommit: true` if you prefer automatic commits for each task operation.
 
 > **Git Hooks**: If you have pre-commit hooks (like conventional commits or linters) that interfere with backlog.md's automated commits, set `bypassGitHooks: true` to skip them using the `--no-verify` flag.
+
+> **Diagrams**: The browser renders Mermaid and PlantUML diagrams inside task, document, and decision markdown. Fence them as ` ```mermaid `, ` ```plantuml ` or ` ```puml `; a bare `@startuml ... @enduml` block that was never fenced is rendered too. PlantUML renders with a bundled engine, so diagrams work offline and no diagram source leaves the machine. Its standard sprite libraries (`!include <aws/...>`, `<C4/...>`, `<kubernetes/...>`) are not bundled and will not resolve. Set `plantumlServerUrl` to render through a PlantUML server instead, which restores those libraries at the cost of sending diagram source to that server. The value is the server's base URL, and `/svg/<encoded>` is appended to it:
+>
+> ```yaml
+> plantuml_server_url: "http://localhost:8080/plantuml"
+> ```
+>
+> Set it with `backlog config set plantumlServerUrl http://localhost:8080/plantuml` and clear it with `backlog config set plantumlServerUrl ""`. A diagram is drawn for the theme that was active at the time, so toggling light/dark updates it the next time the view is opened.
 
 > **Performance**: Cross-branch checking ensures accurate task tracking across all active branches but may impact performance on large repositories. You can disable it by setting `checkActiveBranches: false` for maximum speed, or adjust `activeBranchDays` to control how far back to look for branch activity (lower values = better performance).
 
