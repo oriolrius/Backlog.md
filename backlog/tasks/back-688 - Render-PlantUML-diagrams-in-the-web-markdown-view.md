@@ -3,9 +3,9 @@ id: BACK-688
 title: Render PlantUML diagrams in the web markdown view
 status: Done
 assignee:
-  - '@claude'
-created_date: '2026-09-16 16:13'
-updated_date: '2026-09-16 16:47'
+  - '@codex'
+created_date: 2026-09-16 16:13
+updated_date: '2026-10-28T06:24:00Z'
 labels: []
 dependencies: []
 type: feature
@@ -56,6 +56,8 @@ Backlog documents, tasks, and decisions already render Mermaid diagrams in the b
 12. Plan deviation, recorded after implementation: step 6 dropped the re-render-on-theme-change mechanism. MermaidMarkdown has no ThemeProvider in its existing tests and mermaid never followed the theme either, so the dark flag is read from the documentElement class at render time and a diagram keeps the theme it was drawn with until the view is reopened. Documented in ADVANCED-CONFIG.md.
 
 13. Plan deviation: an adversarial review found the line-based fence scanner was container-blind, which broke two things — it could not see a fence indented under a list item, and it never reopened escaping after a fence its container had closed (a regression against the previous always-escape behaviour). markdown-fences.ts was replaced by a single fencedCodeLines(source) pass that tracks fence indentation and treats a dedent as the end of the block, and both consumers now index into it.
+
+Refresh the published prototype against upstream/main, incorporating the verified Markdown parser and live-render fixes; publish updated validation evidence while the scope questions in issue #1026 remain open.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
