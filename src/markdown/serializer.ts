@@ -46,39 +46,36 @@ function commentItemsEqual(left: Task["comments"], right: Task["comments"]): boo
 	});
 }
 
-export function serializeTask(task: Task): string {
+export function serializeTask(task: Task, originalContent = ""): string {
 	normalizeAssignee(task);
+	// Omitted optional fields are still owned: clearing one must not recover its original entry.
 	const frontmatter = {
 		id: task.id,
 		title: task.title,
 		status: task.status,
 		assignee: task.assignee,
-		...(task.reporter && { reporter: task.reporter }),
+		reporter: task.reporter || undefined,
 		created_date: task.createdDate,
-		...(task.updatedDate && { updated_date: task.updatedDate }),
-		...(task.dueDate && { due_date: task.dueDate }),
+		updated_date: task.updatedDate || undefined,
+		due_date: task.dueDate || undefined,
 		labels: task.labels,
-		...(task.milestone && { milestone: task.milestone }),
+		milestone: task.milestone || undefined,
 		dependencies: task.dependencies,
-		...(task.references && task.references.length > 0 && { references: task.references }),
-		...(task.documentation && task.documentation.length > 0 && { documentation: task.documentation }),
-		...(task.modifiedFiles && task.modifiedFiles.length > 0 && { modified_files: task.modifiedFiles }),
-		...(task.parentTaskId && { parent_task_id: task.parentTaskId }),
-		...(task.subtasks && task.subtasks.length > 0 && { subtasks: task.subtasks }),
-		...(task.priority && { priority: task.priority }),
-		...(task.type && { type: task.type }),
-		...(task.project && { project: task.project }),
-		...(task.ordinal !== undefined && { ordinal: task.ordinal }),
-		...(task.onStatusChange && { onStatusChange: task.onStatusChange }),
+		references: task.references?.length ? task.references : undefined,
+		documentation: task.documentation?.length ? task.documentation : undefined,
+		modified_files: task.modifiedFiles?.length ? task.modifiedFiles : undefined,
+		parent_task_id: task.parentTaskId || undefined,
+		subtasks: task.subtasks?.length ? task.subtasks : undefined,
+		priority: task.priority || undefined,
+		type: task.type || undefined,
+		project: task.project || undefined,
+		ordinal: task.ordinal,
+		onStatusChange: task.onStatusChange || undefined,
 	};
 
 	let contentBody = task.rawContent ?? "";
 	const rawContent = task.rawContent ?? "";
-	if (
-		typeof task.description === "string" &&
-		task.description.trim() !== "" &&
-		sectionChanged(rawContent, "description", task.description)
-	) {
+	if (typeof task.description === "string" && sectionChanged(rawContent, "description", task.description)) {
 		contentBody = updateTaskDescription(contentBody, task.description);
 	}
 	if (Array.isArray(task.acceptanceCriteriaItems)) {
@@ -122,12 +119,12 @@ export function serializeTask(task: Task): string {
 		contentBody = updateTaskFinalSummary(contentBody, task.finalSummary);
 	}
 
-	const serialized = stringifyFrontmatter(contentBody, frontmatter);
+	const serialized = stringifyFrontmatter(contentBody, frontmatter, originalContent);
 	// Ensure there's a blank line between frontmatter and content
 	return serialized.replace(/^(---\n(?:.*\n)*?---)\n(?!$)/, "$1\n\n");
 }
 
-export function serializeDecision(decision: Decision): string {
+export function serializeDecision(decision: Decision, originalContent = ""): string {
 	const frontmatter = {
 		id: decision.id,
 		title: decision.title,
@@ -143,20 +140,20 @@ export function serializeDecision(decision: Decision): string {
 		content += `\n\n## Alternatives\n\n${decision.alternatives}`;
 	}
 
-	return stringifyFrontmatter(content, frontmatter);
+	return stringifyFrontmatter(content, frontmatter, originalContent);
 }
 
-export function serializeDocument(document: Document): string {
+export function serializeDocument(document: Document, originalContent = ""): string {
 	const frontmatter = {
 		id: document.id,
 		title: document.title,
 		type: document.type,
 		created_date: document.createdDate,
-		...(document.updatedDate && { updated_date: document.updatedDate }),
-		...(document.tags && document.tags.length > 0 && { tags: document.tags }),
+		updated_date: document.updatedDate || undefined,
+		tags: document.tags && document.tags.length > 0 ? document.tags : undefined,
 	};
 
-	return stringifyFrontmatter(document.rawContent, frontmatter);
+	return stringifyFrontmatter(document.rawContent, frontmatter, originalContent);
 }
 
 export function updateTaskAcceptanceCriteria(content: string, criteria: string[]): string {

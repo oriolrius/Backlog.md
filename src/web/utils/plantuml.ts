@@ -3,7 +3,7 @@
 import engineAssetUrl from "@plantuml/core/plantuml.js" with { type: "file" };
 import themesAssetUrl from "@plantuml/core/themes.js" with { type: "file" };
 import vizAssetUrl from "@plantuml/core/viz-global.js" with { type: "file" };
-import { fencedCodeLines } from "./markdown-fences";
+import { codeBlockLines } from "./markdown-code";
 
 interface PlantUmlModule {
 	renderToString: (
@@ -46,7 +46,7 @@ export function fenceBarePlantUmlBlocks(source: string): string {
 	if (!source.includes("@start")) return source;
 
 	const lines = source.split("\n");
-	const fenced = fencedCodeLines(source);
+	const fenced = codeBlockLines(source);
 	const result: string[] = [];
 
 	for (let index = 0; index < lines.length; index++) {

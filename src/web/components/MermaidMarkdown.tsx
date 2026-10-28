@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { usePlantUmlServer } from "../contexts/PlantUmlServerContext";
 import { useTaskIdIndex } from "../contexts/TaskIdIndexContext";
-import { fencedCodeLines } from "../utils/markdown-fences";
 import { renderMermaidIn } from "../utils/mermaid";
 import { fenceBarePlantUmlBlocks, renderPlantUmlIn } from "../utils/plantuml";
 import { createTaskIdLinkPlugin } from "../utils/task-id-links";
@@ -11,28 +10,23 @@ interface Props {
 	source: string;
 }
 
-const URI_AUTOLINK_PREFIX_REGEX = /^<[A-Za-z][A-Za-z0-9+.-]{1,31}:[^<>\u0000-\u0020]*>/;
-const EMAIL_AUTOLINK_PREFIX_REGEX = /^<[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z0-9-]+>/;
-
-function escapeAngleBrackets(line: string): string {
-	return line.replace(/<(?=[A-Za-z])/g, (match, offset, fullText) => {
-		const remaining = fullText.slice(offset);
-		if (URI_AUTOLINK_PREFIX_REGEX.test(remaining) || EMAIL_AUTOLINK_PREFIX_REGEX.test(remaining)) {
-			return match;
-		}
-		return "&lt;";
-	});
-}
-
-// Fenced code is already rendered inertly, and escaping inside it would corrupt diagram source
-// such as `<IP>` or `<<interface>>`, so only prose is escaped.
-function sanitizeMarkdownSource(source: string): string {
-	const fenced = fencedCodeLines(source);
-
-	return source
-		.split("\n")
-		.map((line, index) => (fenced[index] ? line : escapeAngleBrackets(line)))
-		.join("\n");
+/**
+ * Remark plugin that switches HTML syntax off in the Markdown parser, so tag-like text such
+ * as `<repo>` is always plain text and the preview shows it as written, in prose and in code alike.
+ *
+ * This is also what keeps HTML in Markdown files inert. The preview library turns any HTML
+ * the parser reports into real elements, and its `skipHtml` option does not switch that step
+ * off, so `<script>`, `<img onerror=...>` and type strings such as `Result<List<MenuItem>>`
+ * must never be reported as HTML. Autolinks (`<https://example.com>`, `<user@example.com>`)
+ * are separate Markdown syntax and still link.
+ * Mermaid diagrams are drawn from code blocks afterwards; `renderMermaidIn` keeps HTML out of those.
+ */
+function treatHtmlAsText(this: { data(): object }): void {
+	// The processor's shared settings, where the Markdown parser looks up its extensions.
+	const settings: { micromarkExtensions?: unknown[] } = this.data();
+	settings.micromarkExtensions ??= [];
+	// "htmlFlow" is block-level HTML and "htmlText" is inline HTML in micromark, the parser behind remark.
+	settings.micromarkExtensions.push({ disable: { null: ["htmlFlow", "htmlText"] } });
 }
 
 function keepHashLinksInCurrentRoute(url: string, key: string): string {
@@ -45,10 +39,10 @@ function keepHashLinksInCurrentRoute(url: string, key: string): string {
 
 export default function MermaidMarkdown({ source }: Props) {
 	const ref = useRef<HTMLDivElement | null>(null);
-	const safeSource = useMemo(() => sanitizeMarkdownSource(fenceBarePlantUmlBlocks(source)), [source]);
-	const taskIdIndex = useTaskIdIndex();
+	const diagramSource = useMemo(() => fenceBarePlantUmlBlocks(source), [source]);
 	const plantUmlServer = usePlantUmlServer();
-	const remarkPlugins = useMemo(() => [createTaskIdLinkPlugin(taskIdIndex)], [taskIdIndex]);
+	const taskIdIndex = useTaskIdIndex();
+	const remarkPlugins = useMemo(() => [treatHtmlAsText, createTaskIdLinkPlugin(taskIdIndex)], [taskIdIndex]);
 
 	useEffect(() => {
 		if (!ref.current) return;
@@ -63,12 +57,13 @@ export default function MermaidMarkdown({ source }: Props) {
 		});
 
 		return () => cancelAnimationFrame(frameId);
-	}, [safeSource, plantUmlServer]);
+	}, [diagramSource, plantUmlServer]);
 
 	return (
-		<div ref={ref} className="wmde-markdown">
+		// Diagram renderers replace DOM nodes outside React, so rebuild their subtree when inputs change.
+		<div key={JSON.stringify([diagramSource, plantUmlServer])} ref={ref} className="wmde-markdown">
 			<MDEditor.Markdown
-				source={safeSource}
+				source={diagramSource}
 				urlTransform={keepHashLinksInCurrentRoute}
 				remarkPlugins={remarkPlugins}
 			/>

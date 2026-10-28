@@ -39,7 +39,7 @@ is necessary to prevent misunderstanding or error, and never use it to restate t
 ### Development
 
 - `bun i` - Install dependencies
-- `bunx tsc --noEmit` - Type-check code
+- `bun run check:types` - Type-check code with Bun
 - `bun run check .` - Run all Biome checks (format + lint)
 - `bun run build` - Build the CLI tool
 - `bun run cli` - Uses the CLI tool directly
@@ -85,7 +85,7 @@ is necessary to prevent misunderstanding or error, and never use it to restate t
 
 ## Code Standards
 
-- **Runtime**: Bun with TypeScript 5
+- **Runtime**: Bun with TypeScript
 - **Formatting**: Biome with tab indentation and double quotes
 - **Linting**: Biome recommended rules
 - **Testing**: Bun's built-in test runner
@@ -100,6 +100,14 @@ are found, the commit will be blocked until fixed.
 - **Committing**: Use the following format: `BACK-123 - Title of the task`
 - **PR titles**: Use `{taskId} - {taskTitle}` (e.g. `BACK-123 - Title of the task`)
 - **Github CLI**: Use `gh` whenever possible for PRs and issues
+
+### Releases
+
+1. Merge the reviewed changes after required CI checks pass.
+2. Create and publish a GitHub Release from the merged commit with a new `vMAJOR.MINOR.PATCH` tag.
+3. Monitor the Release workflow until platform packages, the npm launcher, and release assets are published. The workflow prepares the tagged source and bumps `package.json` automatically.
+
+Do not manually bump the root `package.json` version or start a release with a raw tag push.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <CRITICAL_INSTRUCTION>
@@ -123,3 +131,9 @@ Do not edit Backlog task, draft, document, decision, or milestone markdown files
 
 </CRITICAL_INSTRUCTION>
 <!-- BACKLOG.MD GUIDELINES END -->
+
+<!-- groma:start -->
+## Groma
+
+This project uses Groma. Before you scan, inspect, or curate architecture, or change files for a Backlog task, run `groma agent-instructions` and read the guide it names for that job. When it reports a first scan, ask the user whether they want you to curate the architecture. Do not edit Groma-owned architecture files directly.
+<!-- groma:end -->

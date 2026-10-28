@@ -86,10 +86,21 @@ function main() {
 		child = spawn(binaryPath, cleanedArgs, {
 			stdio: "inherit",
 			windowsHide: true,
+			// Internal: lets a watch end when the process that started this launcher ends.
+			env: { ...process.env, BACKLOG_LAUNCHER: `${process.pid}:${process.ppid}` },
 		});
 	} catch (error) {
 		handleSpawnError(binaryPath, error);
 		return;
+	}
+
+	// Stay alive until the binary exits, so a signal sent to the launcher's PID does not leave it running.
+	// Ctrl+C already reaches the binary from the terminal, so SIGINT is waited out instead of sent twice.
+	if (process.platform !== "win32") {
+		process.on("SIGINT", () => {});
+		for (const signal of ["SIGTERM", "SIGHUP", "SIGQUIT"]) {
+			process.on(signal, () => child.kill(signal));
+		}
 	}
 
 	child.on("exit", (code, signal) => {

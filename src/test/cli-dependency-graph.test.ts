@@ -133,15 +133,26 @@ describe("CLI dependency graph", () => {
 		]);
 	});
 
-	it("names a completed dependency and keeps it resolved", async () => {
+	it("names an archived finished dependency as completed and keeps it resolved", async () => {
 		await addTask("task-1", "Finished");
 		await addTask("task-2", "Selected", ["task-1"]);
 		expect((await runCli(["task", "edit", "1", "-s", "Done"])).exitCode).toBe(0);
-		expect((await runCli(["task", "complete", "1"])).exitCode).toBe(0);
+		expect((await runCli(["task", "archive", "1"])).exitCode).toBe(0);
 
 		expect(graphSection((await runCli(["task", "view", "2", "--plain"])).stdout.toString())).toEqual([
 			"Depends on (1 direct, 1 total):",
 			"└─ TASK-1 - Finished [completed]",
+		]);
+	});
+
+	it("keeps an archived unfinished dependency resolved under its own status", async () => {
+		await addTask("task-1", "Set aside");
+		await addTask("task-2", "Selected", ["task-1"]);
+		expect((await runCli(["task", "archive", "1"])).exitCode).toBe(0);
+
+		expect(graphSection((await runCli(["task", "view", "2", "--plain"])).stdout.toString())).toEqual([
+			"Depends on (1 direct, 1 total):",
+			"└─ TASK-1 - Set aside [To Do]",
 		]);
 	});
 
@@ -223,7 +234,7 @@ describe("CLI dependency graph", () => {
 		}
 	});
 
-	it("leaves compact list, search, and edit payloads unchanged", async () => {
+	it("keeps the full graph out of compact payloads while including direct dependencies", async () => {
 		await addTask("task-1", "Foundation");
 		await addTask("task-2", "Selected", ["task-1"]);
 
@@ -231,18 +242,17 @@ describe("CLI dependency graph", () => {
 		expect(list.dependencyGraph).toBeUndefined();
 		for (const summary of list.tasks) {
 			expect(Object.keys(summary)).not.toContain("dependencyGraph");
-			expect(Object.keys(summary)).not.toContain("dependencies");
+			expect(summary.dependencies).toEqual(summary.id === "TASK-2" ? ["task-1"] : []);
 		}
 
 		const search = JSON.parse((await runCli(["search", "Selected", "--json"])).stdout.toString());
 		expect(search.dependencyGraph).toBeUndefined();
 		for (const entry of search.results) {
 			expect(Object.keys(entry.data)).not.toContain("dependencyGraph");
-			expect(Object.keys(entry.data)).not.toContain("dependencies");
+			expect(entry.data.dependencies).toEqual(["task-1"]);
 		}
 
-		// Only the compact machine-readable payloads must stay unchanged; the plain confirmation is
-		// deliberately the same detail layout as task view.
+		// The plain edit confirmation uses the same full graph as task view.
 		const edited = await runCli(["task", "edit", "2", "--plain", "-l", "graph"]);
 		expect(edited.exitCode).toBe(0);
 		expect(edited.stdout.toString()).toContain("Dependency Graph:");
